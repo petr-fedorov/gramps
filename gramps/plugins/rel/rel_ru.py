@@ -1375,57 +1375,6 @@ class RelationshipCalculator(gramps.gen.relationship.RelationshipCalculator):
             self._sib_type,
         ).get_name(False)
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def get_single_relationship_string(
-        self,
-        Ga,
-        Gb,
-        gender_a,
-        gender_b,
-        reltocommon_a,
-        reltocommon_b,
-        only_birth=True,
-        in_law_a=False,
-        in_law_b=False,
-    ):
-        self._Ga = Ga
-        self._Gb = Gb
-        self._gender_a = gender_a
-        self._gender_b = gender_b
-        self._reltocommon_a = reltocommon_a
-        self._reltocommon_b = reltocommon_b
-        self._only_birth = only_birth
-        self._in_law_a = in_law_a
-        self._in_law_b = in_law_b
-        self._sib_type = self.UNKNOWN_SIB
-
-        return super().get_single_relationship_string(
-            Ga,
-            Gb,
-            gender_a,
-            gender_b,
-            reltocommon_a,
-            reltocommon_b,
-            only_birth,
-            in_law_a,
-            in_law_b,
-        )
-
-    def get_sibling_relationship_string(
-        self, sib_type, gender_a, gender_b, in_law_a=False, in_law_b=False
-    ):
-        self._Ga = 1
-        self._Gb = 1
-        self._gender_a = gender_a
-        self._gender_b = gender_b
-        self._in_law_a = in_law_a
-        self._in_law_b = in_law_b
-        self._sib_type = sib_type
-
-        return super().get_sibling_relationship_string(
-            sib_type, gender_a, gender_b, in_law_a, in_law_b
-        )
-
     def get_plural_relationship_string(
         self,
         Ga,

@@ -26,6 +26,8 @@ Classes for relationships.
 #
 # -------------------------------------------------------------------------
 import logging
+import inspect
+from functools import wraps
 
 # -------------------------------------------------------------------------
 #
@@ -891,6 +893,64 @@ _NEPHEWS_NIECES_LEVEL = [
     "forty-ninth great grandnephews/nieces",
     "fiftieth great grandnephews/nieces",
 ]
+
+
+def capture_prefixed_and_cleanup(func):
+    """
+    A decorator to temporarily capture method parameters as prefixed
+    instance variables (`self._param`) and automatically clean them up.
+    To be used for decoration of RelationshipCalculator.get_single_relationship_string
+    and RelationshipCalculator.get_sibling_relationship_string methods
+
+    Attribution: Modified from and AI-generated template by Gemini (Google AI)
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not args:
+            raise TypeError("This decorator can only be used on object methods.")
+        instance = args[0]
+
+        # 1. Map and identify parameters to capture
+        sig = inspect.signature(func)
+        bound = sig.bind(*args, **kwargs)
+        bound.apply_defaults()
+
+        # Track prefixed names for cleanup
+        prefixed_keys = []
+
+        for param_name, param_value in bound.arguments.items():
+            if param_name != "self":
+                # Add the underscore prefix to the name
+                prefixed_name = f"_{param_name}"
+
+                setattr(instance, prefixed_name, param_value)
+                prefixed_keys.append(prefixed_name)
+
+        # Check whether some attributes are missing due to differences ins signatures of
+        # wrapped methods
+        for prefixed_name in ("_Ga", "_Gb"):
+            if prefixed_name not in prefixed_keys:
+                setattr(instance, prefixed_name, 1)
+                prefixed_keys.append(prefixed_name)
+
+        prefixed_name = "_sib_type"
+        if prefixed_name not in prefixed_keys:
+            setattr(instance, prefixed_name, RelationshipCalculator.UNKNOWN_SIB)
+            prefixed_keys.append(prefixed_name)
+
+        try:
+            # 2. Run the original method while the prefixed attributes exist
+            result = func(*args, **kwargs)
+            return result
+
+        finally:
+            # 3. Clean up afterwards (guaranteed to run even if func() crashes)
+            for prefixed_name in prefixed_keys:
+                if hasattr(instance, prefixed_name):
+                    delattr(instance, prefixed_name)
+
+    return wrapper
 
 
 # -------------------------------------------------------------------------
@@ -2232,6 +2292,7 @@ class RelationshipCalculator:
 
         return rel_str
 
+    @capture_prefixed_and_cleanup
     def get_single_relationship_string(
         self,
         Ga,
@@ -2404,6 +2465,7 @@ class RelationshipCalculator:
             )
         return rel_str
 
+    @capture_prefixed_and_cleanup
     def get_sibling_relationship_string(
         self, sib_type, gender_a, gender_b, in_law_a=False, in_law_b=False
     ):
